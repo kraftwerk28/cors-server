@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  cors-server:
+    build: './'
+    image: 'kraftwerk28/cors-server'
+    ports:
+      - '1492:8080'
