@@ -1,6 +1,4 @@
 'use strict';
-
-const fs = require('fs');
 const http = require('http');
 const https = require('https');
 
@@ -15,7 +13,15 @@ const server = http.createServer((req, res) => {
       proxyurl,
       {},
       (proxyRes) => {
-        res.writeHead(200, { ...proxyRes.headers });
+        const { headers } = proxyRes;
+
+        for (const k in headers) {
+          if (/^access-control-allow/i.test(k)) {
+            delete headers[k];
+          }
+        }
+
+        res.writeHead(200, headers);
         proxyRes.pipe(res);
       }
     );
