@@ -1,15 +1,37 @@
 'use strict';
 const http = require('http');
 const https = require('https');
+const qs = require('querystring');
+const URL_PARAM = ['u', 'q', 'url', 'uri'];
+
+function parseUrl(url) {
+  const parts = url.split('?');
+  if (parts.length < 2) return;
+  const [, query] = parts;
+  for (const p of query.split('&')) {
+    const [k, v] = p.split('=');
+    if (URL_PARAM.includes(k))
+      return qs.unescape(v);
+  }
+}
 
 const server = http.createServer((req, res) => {
-  const proxyurl = req.url
-    .replace(/^\/*/, '')
-    .replace(/^(https?):\/*/, (_match, protocol) => `${protocol}://`);
+  function fail(err) {
+    if (err)
+      res
+        .writeHead(400, { 'Content-Type': 'text/plain' })
+        .end(err.toString());
+    else
+      res.writeHead(400).end();
+  }
+
+  const proxyurl = parseUrl(req.url);
+  if (!proxyurl) return fail('Bad URL');
 
   console.log('Proxying:', proxyurl);
   try {
-    const request = (proxyurl.startsWith('https') ? https : http).request(
+    const h = proxyurl.startsWith('https') ? https : http;
+    const request = h.request(
       proxyurl,
       {},
       (proxyRes) => {
@@ -28,9 +50,7 @@ const server = http.createServer((req, res) => {
     req.pipe(request)
 
   } catch (e) {
-    res
-      .writeHead(400, { 'Content-Type': 'text/plain' })
-      .end(e.toString());
+    fail(e);
   }
 });
 

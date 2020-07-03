@@ -5,4 +5,5 @@ services:
     build: './'
     image: 'kraftwerk28/cors-server'
     ports:
-      - '1492:8080'
+      - 127.0.0.1:1492:8080
+    restart: always
